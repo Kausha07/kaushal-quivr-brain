@@ -1,0 +1,14 @@
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+const upload = require('./routes/upload');
+const search = require('./routes/search');
+const auth   = require('./routes/auth');
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use('/api/auth', auth);
+app.use('/api/upload', upload);
+app.use('/api/search', search);
+app.get('/health', (_, res) => res.json({ status: 'ok' }));
+app.listen(process.env.PORT || 3000, () => console.log('OmniBrain running'));

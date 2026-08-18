@@ -6,6 +6,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 // In-memory mock vector store with pgvector-compatible schema
 const mockVectorStore = [

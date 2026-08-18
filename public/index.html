@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OmniBrain AI — Document RAG Search Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #1e1035 100%);
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --primary-accent: #6366f1;
+      --secondary-accent: #a855f7;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 2rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .logo-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    .pulse {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--success);
+      animation: pulseAnim 2s infinite;
+    }
+
+    @keyframes pulseAnim {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.6; }
+    }
+
+    main {
+      flex: 1;
+      max-width: 1100px;
+      width: 90%;
+      margin: 2.5rem auto;
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 2rem;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 1.75rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .panel-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .upload-box {
+      border: 2px dashed rgba(99, 102, 241, 0.4);
+      border-radius: 14px;
+      padding: 2rem 1rem;
+      text-align: center;
+      background: rgba(99, 102, 241, 0.04);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .upload-box:hover {
+      border-color: var(--primary-accent);
+      background: rgba(99, 102, 241, 0.08);
+    }
+
+    .input-group {
+      margin-top: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border 0.3s ease;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: var(--primary-accent);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 1rem;
+      background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+
+    .search-bar-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .search-btn {
+      width: auto;
+      padding: 0 24px;
+      margin-top: 0;
+    }
+
+    .results-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .result-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: transform 0.2s ease;
+    }
+
+    .result-card:hover {
+      transform: translateX(4px);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .score-chip {
+      background: rgba(168, 85, 247, 0.2);
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      color: #c084fc;
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+
+    .doc-badge {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .result-body {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--card-border);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo-container">
+      <div class="logo-badge">Ω</div>
+      <div class="logo-title">OmniBrain AI <span style="font-weight: 400; color: var(--text-muted);">| RAG Search Engine</span></div>
+    </div>
+    <div class="status-badge">
+      <div class="pulse"></div>
+      PostgreSQL + pgvector Active
+    </div>
+  </header>
+
+  <main>
+    <!-- Left Panel: Document Upload -->
+    <div class="panel">
+      <div class="panel-title">📄 Document Vectorizer</div>
+      <div class="upload-box" onclick="document.getElementById('docContent').focus()">
+        <svg width="40" height="40" fill="none" stroke="#6366f1" viewBox="0 0 24 24" style="margin-bottom: 8px;">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <p style="font-size: 0.9rem; font-weight: 600;">Add Knowledge Document</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">PDF, TXT or Markdown</p>
+      </div>
+
+      <div class="input-group">
+        <label>Document Title / Source</label>
+        <input type="text" id="docSource" placeholder="e.g. policy_v3.pdf">
+      </div>
+
+      <div class="input-group">
+        <label>Content to Chunk & Embed</label>
+        <textarea id="docContent" rows="4" placeholder="Enter document text content here..."></textarea>
+      </div>
+
+      <button class="btn" onclick="uploadDocument()">⚡ Chunk & Index in pgvector</button>
+      <div id="uploadStatus" style="margin-top: 10px; font-size: 0.85rem; text-align: center;"></div>
+    </div>
+
+    <!-- Right Panel: Semantic Vector Search -->
+    <div class="panel">
+      <div class="panel-title">🔍 Semantic Cosine Search</div>
+      <div class="search-bar-container">
+        <input type="text" id="searchQuery" placeholder="Ask anything across indexed documents..." value="return policy" onkeypress="if(event.key==='Enter') runSearch()">
+        <button class="btn search-btn" onclick="runSearch()">Search</button>
+      </div>
+
+      <div class="results-container" id="resultsContainer">
+        <!-- Results populated dynamically -->
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Built by <strong>Kaushal Raithatha</strong> — Node.js, Express, LangChain, PostgreSQL + pgvector
+  </footer>
+
+  <script>
+    async function runSearch() {
+      const query = document.getElementById('searchQuery').value;
+      const container = document.getElementById('resultsContainer');
+      if (!query) return;
+
+      container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 2rem;">Executing cosine similarity search...</p>';
+
+      try {
+        const res = await fetch('/api/v1/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        const data = await res.json();
+
+        container.innerHTML = '';
+        if (!data.results || data.results.length === 0) {
+          container.innerHTML = '<p style="color: var(--text-muted);">No semantic matches found.</p>';
+          return;
+        }
+
+        data.results.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'result-card';
+          card.innerHTML = `
+            <div class="result-header">
+              <span class="doc-badge">📌 ${item.metadata.source} (Chunk ${item.metadata.chunk})</span>
+              <span class="score-chip">${(item.score * 100).toFixed(1)}% Similarity</span>
+            </div>
+            <div class="result-body">${item.content}</div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        container.innerHTML = '<p style="color: #ef4444;">Error executing vector search.</p>';
+      }
+    }
+
+    async function uploadDocument() {
+      const filename = document.getElementById('docSource').value || 'new_doc.pdf';
+      const content = document.getElementById('docContent').value;
+      const status = document.getElementById('uploadStatus');
+
+      if (!content) {
+        status.style.color = '#ef4444';
+        status.innerText = 'Please enter document text';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/v1/documents/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename, content })
+        });
+        const data = await res.json();
+        status.style.color = '#10b981';
+        status.innerText = '✓ Vectorized and indexed in pgvector!';
+        document.getElementById('docContent').value = '';
+        runSearch();
+      } catch (err) {
+        status.style.color = '#ef4444';
+        status.innerText = 'Error indexing document';
+      }
+    }
+
+    // Run initial search on load
+    runSearch();
+  </script>
+</body>
+</html>
